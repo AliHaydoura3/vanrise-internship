@@ -1,0 +1,21 @@
+:root {
+  --bg: #f7f8fb;
+}
+
+/* Minimal overrides on top of Bootstrap */
+body {
+  background: var(--bg);
+  color: #0f172a;
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    "Helvetica Neue",
+    Arial;
+}
+
+.card {
+  border-radius: 12px;
+}
