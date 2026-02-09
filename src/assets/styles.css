@@ -1,0 +1,84 @@
+.app-header {
+  background: linear-gradient(90deg, #1a73e8, #00b4d8);
+  color: #fff;
+  padding: 18px 0;
+  margin-bottom: 20px;
+}
+
+.header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header-right {
+  font-weight: 600;
+}
+
+.app-title {
+  margin: 0;
+  font-weight: 700;
+  font-size: 1.6rem;
+}
+
+.app-sub {
+  margin: 0.15rem 0 0;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(17, 24, 39, 0.06);
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.controls .input-group .form-control {
+  border-radius: 6px 0 0 6px;
+}
+
+.controls .input-group .btn {
+  border-radius: 0 6px 6px 0;
+}
+
+.table-card .table {
+  margin-bottom: 0;
+}
+
+.btn-sm {
+  margin-right: 6px;
+}
+
+body {
+  background: #f4f7fb;
+  font-family: Helvetica, Arial, sans-serif;
+}
+
+.app-main {
+  max-width: 960px;
+  margin-top: 18px;
+}
+
+.table-hover > tbody > tr:hover {
+  background: linear-gradient(
+    90deg,
+    rgba(26, 115, 232, 0.04),
+    rgba(0, 180, 216, 0.02)
+  );
+}
+
+.text-muted {
+  color: #8a96a3;
+}
+
+@media (max-width: 576px) {
+  .header-inner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .app-main {
+    padding: 0 12px;
+  }
+}
