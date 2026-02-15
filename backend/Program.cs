@@ -6,7 +6,9 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 
-builder.Services.AddScoped<IDeviceRepository, DeviceRepository>(); builder.Services.AddScoped<DeviceInventory.Data.IClientRepository, DeviceInventory.Data.ClientRepository>();
+builder.Services.AddScoped<IDeviceRepository, DeviceRepository>();
+builder.Services.AddScoped<DeviceInventory.Data.IClientRepository, DeviceInventory.Data.ClientRepository>();
+builder.Services.AddScoped<IPhoneNumberRepository, PhoneNumberRepository>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("DevCors", policy =>
