@@ -3,19 +3,25 @@ angular.module("myApp").controller("MainCtrl", [
   "ItemsService",
   function ($uibModal, ItemsService) {
     var vm = this;
-    vm.items = ItemsService.list();
+    vm.items = [];
     vm.query = "";
-    vm.results = vm.items.slice();
+    vm.results = [];
+    vm.loading = false;
 
     vm.refreshResults = function () {
-      var q = (vm.query || "").toLowerCase();
-      if (!q) {
-        vm.results = vm.items.slice();
-        return;
-      }
-      vm.results = vm.items.filter(function (it) {
-        return (it.name || "").toLowerCase().indexOf(q) !== -1;
-      });
+      vm.loading = true;
+      ItemsService.list(vm.query)
+        .then(function (items) {
+          vm.items = items;
+          vm.results = items.slice();
+        })
+        .catch(function () {
+          vm.items = [];
+          vm.results = [];
+        })
+        .finally(function () {
+          vm.loading = false;
+        });
     };
 
     vm.search = function () {
@@ -39,8 +45,13 @@ angular.module("myApp").controller("MainCtrl", [
 
       modal.result.then(function (result) {
         if (result) {
-          ItemsService.add(result);
-          vm.refreshResults();
+          ItemsService.add(result)
+            .then(function () {
+              vm.refreshResults();
+            })
+            .catch(function (err) {
+              console.error(err);
+            });
         }
       });
     };
@@ -62,8 +73,13 @@ angular.module("myApp").controller("MainCtrl", [
 
       modal.result.then(function (result) {
         if (result) {
-          ItemsService.update(result);
-          vm.refreshResults();
+          ItemsService.update(result)
+            .then(function () {
+              vm.refreshResults();
+            })
+            .catch(function (err) {
+              console.error(err);
+            });
         }
       });
     };
@@ -94,8 +110,13 @@ angular.module("myApp").controller("MainCtrl", [
       });
 
       modal.result.then(function () {
-        ItemsService.remove(item);
-        vm.refreshResults();
+        ItemsService.remove(item)
+          .then(function () {
+            vm.refreshResults();
+          })
+          .catch(function (err) {
+            console.error(err);
+          });
       });
     };
 

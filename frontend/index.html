@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Device Inventory</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="src/assets/styles.css" />
+  <script>
+    window.API_BASE = "http://localhost:5297";
+  </script>
+</head>
+
+<body ng-app="myApp" ng-controller="MainCtrl as vm" ng-init="appView='devices'">
+  <div class="app-shell">
+    <header class="app-header">
+      <div class="container header-inner">
+        <div>
+          <h1 class="app-title">Device Inventory</h1>
+        </div>
+        <div>
+          <div class="btn-group" role="group" aria-label="view-switch">
+            <button type="button" class="btn btn-default" ng-class="{active: appView==='devices'}"
+              ng-click="appView='devices'">Devices</button>
+            <button type="button" class="btn btn-default" ng-class="{active: appView==='clients'}"
+              ng-click="appView='clients'">Clients</button>
+          </div>
+        </div>
+        <div class="header-right app-sub">Created by Ali Haydoura</div>
+      </div>
+    </header>
+
+    <main class="container app-main">
+      <!-- Devices view -->
+      <div ng-if="appView==='devices'">
+        <div class="controls card">
+          <div class="input-group">
+            <input type="text" class="form-control" placeholder="Search by name..." ng-model="vm.query" />
+            <span class="input-group-btn">
+              <button class="btn btn-primary" ng-click="vm.search()">
+                <span class="glyphicon glyphicon-search"></span>
+                Search
+              </button>
+              <button class="btn btn-success" ng-click="vm.add()">
+                <span class="glyphicon glyphicon-plus"></span>
+                Add
+              </button>
+            </span>
+          </div>
+        </div>
+
+        <div class="card table-card">
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th style="width: 80px">ID</th>
+                  <th>Name</th>
+                  <th style="width: 180px">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr ng-repeat="item in vm.results track by item.id">
+                  <td>{{item.id}}</td>
+                  <td>{{item.name}}</td>
+                  <td>
+                    <button class="btn btn-sm btn-info" ng-click="vm.edit(item)">
+                      <span class="glyphicon glyphicon-pencil"></span>
+                      Edit
+                    </button>
+                    <button class="btn btn-sm btn-danger" ng-click="vm.confirmDelete(item)">
+                      <span class="glyphicon glyphicon-trash"></span>
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+                <tr ng-if="vm.results.length === 0">
+                  <td colspan="3" class="text-center text-muted">
+                    No results found
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Clients view -->
+      <div ng-if="appView==='clients'" ng-controller="ClientsCtrl as c">
+        <div class="controls card">
+          <div class="row">
+            <div class="col-sm-6">
+              <div class="input-group">
+                <input type="text" class="form-control" placeholder="Search by name..." ng-model="c.query" />
+                <span class="input-group-btn">
+                  <button class="btn btn-primary" ng-click="c.search()">
+                    <span class="glyphicon glyphicon-search"></span>
+                    Search
+                  </button>
+                </span>
+              </div>
+            </div>
+
+            <div class="col-sm-3">
+              <select class="form-control" ng-model="c.typeFilter" ng-change="c.filterByType()">
+                <option value="">All types</option>
+                <option value="0">Individual</option>
+                <option value="1">Organization</option>
+              </select>
+            </div>
+
+            <div class="col-sm-3 text-right">
+              <button class="btn btn-success" ng-click="c.add()">
+                <span class="glyphicon glyphicon-plus"></span>
+                Add Client
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card table-card">
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th style="width: 80px">ID</th>
+                  <th>Name</th>
+                  <th style="width: 150px">Type</th>
+                  <th style="width: 160px">Birth date</th>
+                  <th style="width: 180px">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr ng-repeat="item in c.results track by item.id">
+                  <td>{{item.id}}</td>
+                  <td>{{item.name}}</td>
+                  <td>{{item.type === 0 ? 'Individual' : 'Organization'}}</td>
+                  <td>{{item.birthDate ? (item.birthDate | date:'yyyy-MM-dd') : ''}}</td>
+                  <td>
+                    <button class="btn btn-sm btn-info" ng-click="c.edit(item)">
+                      <span class="glyphicon glyphicon-pencil"></span>
+                      Edit
+                    </button>
+                    <button class="btn btn-sm btn-danger" ng-click="c.confirmDelete(item)">
+                      <span class="glyphicon glyphicon-trash"></span>
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+                <tr ng-if="c.results.length === 0">
+                  <td colspan="5" class="text-center text-muted">No results found</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.14.3/ui-bootstrap-tpls.min.js"></script>
+
+  <script src="src/app.module.js"></script>
+  <script src="src/services/items.service.js"></script>
+  <script src="src/services/clients.service.js"></script>
+  <script src="src/controllers/item-modal.controller.js"></script>
+  <script src="src/controllers/main.controller.js"></script>
+  <script src="src/controllers/clients.controller.js"></script>
+  <script src="src/controllers/client-modal.controller.js"></script>
+
+  <script type="text/ng-template" id="itemModal.html">
+      <div class="modal-header">
+        <h3 class="modal-title">Device <small class="text-muted">{{modalCtrl.modalTitle}}</small></h3>
+      </div>
+      <div class="modal-body">
+        <form name="itemForm" novalidate>
+          <div class="form-group">
+            <label>Name</label>
+            <input type="text" class="form-control" ng-model="modalCtrl.item.name" required />
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-default" ng-click="modalCtrl.cancel()">Cancel</button>
+        <button class="btn btn-primary" ng-click="modalCtrl.save()" ng-disabled="!modalCtrl.item.name">Save</button>
+      </div>
+    </script>
+
+  <script type="text/ng-template" id="clientModal.html">
+      <div class="modal-header">
+        <h3 class="modal-title">Client <small class="text-muted">{{modalCtrl.modalTitle}}</small></h3>
+      </div>
+      <div class="modal-body">
+        <form name="clientForm" novalidate>
+          <div class="form-group">
+            <label>Name</label>
+            <input type="text" class="form-control" ng-model="modalCtrl.item.name" required />
+          </div>
+
+          <div class="form-group">
+            <label>Type</label>
+            <select class="form-control" ng-model="modalCtrl.item.type">
+              <option ng-value="0">Individual</option>
+              <option ng-value="1">Organization</option>
+            </select>
+          </div>
+
+          <div class="form-group" ng-if="modalCtrl.item.type === 0">
+            <label>Birth date (optional)</label>
+            <input type="date" class="form-control" ng-model="modalCtrl.item.birthDate" />
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-default" ng-click="modalCtrl.cancel()">Cancel</button>
+        <button class="btn btn-primary" ng-click="modalCtrl.save()" ng-disabled="!modalCtrl.item.name">Save</button>
+      </div>
+    </script>
+
+  <script type="text/ng-template" id="confirmDelete.html">
+      <div class="modal-header">
+        <h3 class="modal-title">Confirm Delete</h3>
+      </div>
+      <div class="modal-body">Are you sure you want to delete <strong>{{m.item.name}}</strong>?</div>
+      <div class="modal-footer">
+        <button class="btn btn-default" ng-click="m.cancel()">Cancel</button>
+        <button class="btn btn-danger" ng-click="m.confirm()">Delete</button>
+      </div>
+    </script>
+</body>
+
+</html>
