@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "Hash": "RyCqCuIEhW2XRfGeIDzAtilPPAAbFQu1f0GjOkn+47o=",
+  "Source": "DeviceInventory",
+  "BasePath": "_content/DeviceInventory",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}
