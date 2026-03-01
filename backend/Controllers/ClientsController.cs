@@ -35,6 +35,8 @@ namespace DeviceInventory.Controllers
         public ActionResult<Client> CreateClient([FromBody] Client client)
         {
             if (client == null || string.IsNullOrWhiteSpace(client.Name)) return BadRequest("Name is required.");
+            if (client.Type == ClientType.Individual && client.BirthDate == null)
+                return BadRequest("BirthDate is required for individual clients.");
 
             var created = _repo.CreateClient(client);
             return CreatedAtAction(nameof(GetClient), new { id = created.Id }, created);
@@ -44,6 +46,8 @@ namespace DeviceInventory.Controllers
         public ActionResult UpdateClient(int id, [FromBody] Client updated)
         {
             if (updated == null || string.IsNullOrWhiteSpace(updated.Name)) return BadRequest("Name is required.");
+            if (updated.Type == ClientType.Individual && updated.BirthDate == null)
+                return BadRequest("BirthDate is required for individual clients.");
 
             var ok = _repo.UpdateClient(id, updated);
             if (!ok) return NotFound();

@@ -1,8 +1,38 @@
 angular.module("myApp").controller("MainCtrl", [
+  "$scope",
   "$uibModal",
   "ItemsService",
-  function ($uibModal, ItemsService) {
+  "AuthService",
+  function ($scope, $uibModal, ItemsService, AuthService) {
     var vm = this;
+
+    // ── Authentication ───────────────────────────────────────────────
+    // always start logged out; wipe any saved credentials so login page is shown
+    AuthService.logout();
+    vm.loggedIn = false;
+    vm.currentUser = null;
+
+    vm.getInitials = function () {
+      return vm.currentUser ? vm.currentUser.username.substring(0, 2).toUpperCase() : "?";
+    };
+
+    vm.logout = function () {
+      AuthService.logout();
+      vm.loggedIn = false;
+      vm.currentUser = null;
+    };
+
+    // Receive login-success event broadcast from LoginCtrl
+    $scope.$on("userLoggedIn", function (event, data) {
+      console.log("MainCtrl: received userLoggedIn", data.username);
+      vm.loggedIn = true;
+      vm.currentUser = { username: data.username };
+      vm.refreshResults();
+    });
+
+
+
+    // ── Devices ──────────────────────────────────────────────────────
     vm.items = [];
     vm.query = "";
     vm.results = [];
@@ -120,6 +150,8 @@ angular.module("myApp").controller("MainCtrl", [
       });
     };
 
-    vm.refreshResults();
+    if (vm.loggedIn) {
+      vm.refreshResults();
+    }
   },
 ]);

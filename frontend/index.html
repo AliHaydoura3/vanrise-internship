@@ -4,231 +4,804 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Device Inventory</title>
+  <title>Vanrise</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" />
-  <link rel="stylesheet" href="src/assets/styles.css" />
+  <!-- cache bust by version; also helps Chrome pick up updates -->
+  <link rel="stylesheet" href="src/assets/styles.css?v=20260303" />
+  <!-- prevent aggressive caching during development -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <script>
     window.API_BASE = "http://localhost:5297";
   </script>
 </head>
 
 <body ng-app="myApp" ng-controller="MainCtrl as vm" ng-init="appView='devices'">
-  <div class="app-shell">
-    <header class="app-header">
-      <div class="container header-inner">
-        <div>
-          <h1 class="app-title">Device Inventory</h1>
+
+  <!-- ── Login page ─────────────────────────────────────────────────── -->
+  <div class="login-shell" ng-show="!vm.loggedIn" ng-controller="LoginCtrl as lc">
+    <div class="login-card">
+      <div class="login-card-header">
+        <div class="login-brand-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"
+            stroke-linejoin="round">
+            <path d="M1.5 8.5a15 15 0 0 1 21 0M5.5 12.5a10 10 0 0 1 13 0M9.5 16.5a5 5 0 0 1 5 0M12 20.5h.01" />
+          </svg>
         </div>
-        <div>
-          <div class="btn-group" role="group" aria-label="view-switch">
-            <button type="button" class="btn btn-default" ng-class="{active: appView==='devices'}"
-              ng-click="appView='devices'">Devices</button>
-            <button type="button" class="btn btn-default" ng-class="{active: appView==='clients'}"
-              ng-click="appView='clients'">Clients</button>
-          </div>
-        </div>
-        <div class="header-right app-sub">Created by Ali Haydoura</div>
+        <div class="login-brand-name">Vanrise</div>
+        <div class="login-brand-tagline">Inventory Management System</div>
       </div>
-    </header>
-
-    <main class="container app-main">
-      <!-- Devices view -->
-      <div ng-if="appView==='devices'">
-        <div class="controls card">
-          <div class="input-group">
-            <input type="text" class="form-control" placeholder="Search by name..." ng-model="vm.query" />
-            <span class="input-group-btn">
-              <button class="btn btn-primary" ng-click="vm.search()">
-                <span class="glyphicon glyphicon-search"></span>
-                Search
-              </button>
-              <button class="btn btn-success" ng-click="vm.add()">
-                <span class="glyphicon glyphicon-plus"></span>
-                Add
-              </button>
-            </span>
-          </div>
+      <div class="login-card-body">
+        <p class="login-title">Sign in to your account</p>
+        <div class="login-error" ng-if="lc.error">
+          <span class="glyphicon glyphicon-exclamation-sign"></span>
+          {{lc.error}}
         </div>
-
-        <div class="card table-card">
-          <div class="table-responsive">
-            <table class="table table-hover">
-              <thead>
-                <tr>
-                  <th style="width: 80px">ID</th>
-                  <th>Name</th>
-                  <th style="width: 180px">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr ng-repeat="item in vm.results track by item.id">
-                  <td>{{item.id}}</td>
-                  <td>{{item.name}}</td>
-                  <td>
-                    <button class="btn btn-sm btn-info" ng-click="vm.edit(item)">
-                      <span class="glyphicon glyphicon-pencil"></span>
-                      Edit
-                    </button>
-                    <button class="btn btn-sm btn-danger" ng-click="vm.confirmDelete(item)">
-                      <span class="glyphicon glyphicon-trash"></span>
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-                <tr ng-if="vm.results.length === 0">
-                  <td colspan="3" class="text-center text-muted">
-                    No results found
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" class="form-control" ng-model="lc.username" placeholder="Enter username"
+            ng-keyup="$event.keyCode==13 && lc.submit()" autofocus />
         </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" class="form-control" ng-model="lc.password" placeholder="Enter password"
+            ng-keyup="$event.keyCode==13 && lc.submit()" />
+        </div>
+        <button class="btn btn-primary login-submit" ng-click="lc.submit()"
+          ng-disabled="lc.loading || !lc.username || !lc.password">
+          <span class="glyphicon" ng-class="lc.loading ? 'glyphicon-refresh' : 'glyphicon-log-in'"></span>
+          {{lc.loading ? 'Signing in…' : 'Sign In'}}
+        </button>
       </div>
-
-      <!-- Clients view -->
-      <div ng-if="appView==='clients'" ng-controller="ClientsCtrl as c">
-        <div class="controls card">
-          <div class="row">
-            <div class="col-sm-6">
-              <div class="input-group">
-                <input type="text" class="form-control" placeholder="Search by name..." ng-model="c.query" />
-                <span class="input-group-btn">
-                  <button class="btn btn-primary" ng-click="c.search()">
-                    <span class="glyphicon glyphicon-search"></span>
-                    Search
-                  </button>
-                </span>
-              </div>
-            </div>
-
-            <div class="col-sm-3">
-              <select class="form-control" ng-model="c.typeFilter" ng-change="c.filterByType()">
-                <option value="">All types</option>
-                <option value="0">Individual</option>
-                <option value="1">Organization</option>
-              </select>
-            </div>
-
-            <div class="col-sm-3 text-right">
-              <button class="btn btn-success" ng-click="c.add()">
-                <span class="glyphicon glyphicon-plus"></span>
-                Add Client
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div class="card table-card">
-          <div class="table-responsive">
-            <table class="table table-hover">
-              <thead>
-                <tr>
-                  <th style="width: 80px">ID</th>
-                  <th>Name</th>
-                  <th style="width: 150px">Type</th>
-                  <th style="width: 160px">Birth date</th>
-                  <th style="width: 180px">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr ng-repeat="item in c.results track by item.id">
-                  <td>{{item.id}}</td>
-                  <td>{{item.name}}</td>
-                  <td>{{item.type === 0 ? 'Individual' : 'Organization'}}</td>
-                  <td>{{item.birthDate ? (item.birthDate | date:'yyyy-MM-dd') : ''}}</td>
-                  <td>
-                    <button class="btn btn-sm btn-info" ng-click="c.edit(item)">
-                      <span class="glyphicon glyphicon-pencil"></span>
-                      Edit
-                    </button>
-                    <button class="btn btn-sm btn-danger" ng-click="c.confirmDelete(item)">
-                      <span class="glyphicon glyphicon-trash"></span>
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-                <tr ng-if="c.results.length === 0">
-                  <td colspan="5" class="text-center text-muted">No results found</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+      <div class="login-footer">
+        Vanrise Telecom &mdash; Device Inventory System
       </div>
-    </main>
+    </div>
   </div>
 
+  <!-- ── Main app shell ─────────────────────────────────────────────── -->
+  <div class="app-shell" ng-if="vm.loggedIn">
+
+    <!-- ── Sidebar ──────────────────────────────────────────────────── -->
+    <nav class="app-sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-logo">
+          <div class="brand-icon">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#fff" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1.5 8.5a15 15 0 0 1 21 0M5.5 12.5a10 10 0 0 1 13 0M9.5 16.5a5 5 0 0 1 5 0M12 20.5h.01" />
+            </svg>
+          </div>
+          <div>
+            <div class="brand-name">Vanrise</div>
+            <div class="brand-tagline">Inventory System</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-section-label">Data Entry</div>
+
+        <button class="nav-item" ng-class="{active: appView==='devices'}" ng-click="appView='devices'">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="20" height="14" rx="2" />
+            <path d="M8 21h8M12 17v4" />
+          </svg>
+          Devices
+        </button>
+
+        <button class="nav-item" ng-class="{active: appView==='clients'}" ng-click="appView='clients'">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+          </svg>
+          Clients
+        </button>
+
+        <button class="nav-item" ng-class="{active: appView==='phonenumbers'}" ng-click="appView='phonenumbers'">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path
+              d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 11.61 19a19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-2.92-8.19A2 2 0 0 1 4.68 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+          </svg>
+          Phone Numbers
+        </button>
+
+        <button class="nav-item" ng-class="{active: appView==='reservations'}" ng-click="appView='reservations'">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+            <line x1="16" y1="2" x2="16" y2="6" />
+            <line x1="8" y1="2" x2="8" y2="6" />
+            <line x1="3" y1="10" x2="21" y2="10" />
+          </svg>
+          Reservations
+        </button>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-section-label">Reports</div>
+
+        <button class="nav-item" ng-class="{active: appView==='clientsreport'}" ng-click="appView='clientsreport'">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="20" x2="18" y2="10" />
+            <line x1="12" y1="20" x2="12" y2="4" />
+            <line x1="6" y1="20" x2="6" y2="14" />
+            <line x1="2" y1="20" x2="22" y2="20" />
+          </svg>
+          Clients Report
+          <span class="nav-badge">RPT</span>
+        </button>
+
+        <button class="nav-item" ng-class="{active: appView==='phonenumbersreport'}"
+          ng-click="appView='phonenumbersreport'">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+          </svg>
+          Numbers Report
+          <span class="nav-badge">RPT</span>
+        </button>
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="sidebar-avatar">{{vm.getInitials()}}</div>
+        <div style="flex:1;min-width:0;">
+          <div class="sidebar-user-name">{{vm.currentUser.username}}</div>
+          <div class="sidebar-user-role">System Admin</div>
+        </div>
+        <button class="logout-btn" ng-click="vm.logout()" title="Sign out">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round" width="16" height="16">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+          </svg>
+        </button>
+      </div>
+    </nav>
+
+    <!-- ── Main content wrapper ──────────────────────────────────────── -->
+    <div class="app-main-wrap">
+
+      <!-- Top bar -->
+      <div class="app-topbar">
+        <div class="topbar-breadcrumb">
+          <span class="topbar-section">Vanrise</span>
+          <span class="topbar-sep">›</span>
+          <span class="topbar-page" ng-if="appView==='devices'">Devices</span>
+          <span class="topbar-page" ng-if="appView==='clients'">Clients</span>
+          <span class="topbar-page" ng-if="appView==='phonenumbers'">Phone Numbers</span>
+          <span class="topbar-page" ng-if="appView==='reservations'">Reservations</span>
+          <span class="topbar-page" ng-if="appView==='clientsreport'">Clients Report</span>
+          <span class="topbar-page" ng-if="appView==='phonenumbersreport'">Phone Numbers Report</span>
+        </div>
+        <div class="topbar-right">
+          <span class="topbar-badge">System Online</span>
+        </div>
+      </div>
+
+      <main class="app-content">
+
+        <!-- ── Devices view ─────────────────────────────────────────── -->
+        <div ng-if="appView==='devices'">
+          <div class="page-header-bar">
+            <div>
+              <h2 class="page-title">Devices</h2>
+              <div class="page-subtitle">Manage network devices and hardware inventory</div>
+            </div>
+            <button class="btn btn-success" ng-click="vm.add()">
+              <span class="glyphicon glyphicon-plus"></span> Add Device
+            </button>
+          </div>
+
+          <div class="controls card">
+            <div class="card-label">Filter</div>
+            <div class="input-group">
+              <input type="text" class="form-control" placeholder="Search devices by name…" ng-model="vm.query"
+                ng-keyup="$event.keyCode==13 && vm.search()" />
+              <span class="input-group-btn">
+                <button class="btn btn-primary" ng-click="vm.search()">
+                  <span class="glyphicon glyphicon-search"></span> Search
+                </button>
+              </span>
+            </div>
+          </div>
+
+          <div class="card table-card">
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th style="width:70px">ID</th>
+                    <th>Device Name</th>
+                    <th style="width:160px">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr ng-repeat="item in vm.results track by item.id">
+                    <td><span class="id-chip">#{{item.id}}</span></td>
+                    <td><strong>{{item.name}}</strong></td>
+                    <td class="actions-cell">
+                      <button class="btn btn-sm btn-info" ng-click="vm.edit(item)">
+                        <span class="glyphicon glyphicon-pencil"></span> Edit
+                      </button>
+                      <button class="btn btn-sm btn-danger" ng-click="vm.confirmDelete(item)">
+                        <span class="glyphicon glyphicon-trash"></span> Delete
+                      </button>
+                    </td>
+                  </tr>
+                  <tr class="empty-row" ng-if="vm.results.length === 0">
+                    <td colspan="3">
+                      <span class="empty-icon">📡</span>
+                      No devices found
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Clients view ─────────────────────────────────────────── -->
+        <div ng-if="appView==='clients'" ng-controller="ClientsCtrl as c">
+          <div class="page-header-bar">
+            <div>
+              <h2 class="page-title">Clients</h2>
+              <div class="page-subtitle">Manage individual and organization subscriber accounts</div>
+            </div>
+            <button class="btn btn-success" ng-click="c.add()">
+              <span class="glyphicon glyphicon-plus"></span> Add Client
+            </button>
+          </div>
+
+          <div class="controls card">
+            <div class="card-label">Filter</div>
+            <div class="row">
+              <div class="col-sm-6">
+                <div class="input-group">
+                  <input type="text" class="form-control" placeholder="Search by client name…" ng-model="c.query"
+                    ng-keyup="$event.keyCode==13 && c.search()" />
+                  <span class="input-group-btn">
+                    <button class="btn btn-primary" ng-click="c.search()">
+                      <span class="glyphicon glyphicon-search"></span> Search
+                    </button>
+                  </span>
+                </div>
+              </div>
+              <div class="col-sm-3">
+                <client-type-selector selected-value="c.typeFilter" on-change="c.filterByType(value)"
+                  show-all-option="true" api="c.clientTypeSelectorApi">
+                </client-type-selector>
+              </div>
+              <div class="col-sm-3"></div>
+            </div>
+          </div>
+
+          <div class="card table-card">
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th style="width:70px">ID</th>
+                    <th>Name</th>
+                    <th style="width:140px">Type</th>
+                    <th style="width:140px">Birth Date</th>
+                    <th style="width:280px">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr ng-repeat="item in c.results track by item.id">
+                    <td><span class="id-chip">#{{item.id}}</span></td>
+                    <td><strong>{{item.name}}</strong></td>
+                    <td>
+                      <span ng-if="item.type === 0" class="badge-individual">Individual</span>
+                      <span ng-if="item.type === 1" class="badge-organization">Organization</span>
+                    </td>
+                    <td>{{item.birthDate ? (item.birthDate | date:'dd MMM yyyy') : '—'}}</td>
+                    <td class="actions-cell">
+                      <button class="btn btn-sm btn-info" ng-click="c.edit(item)">
+                        <span class="glyphicon glyphicon-pencil"></span> Edit
+                      </button>
+                      <button class="btn btn-sm btn-danger" ng-click="c.confirmDelete(item)">
+                        <span class="glyphicon glyphicon-trash"></span> Delete
+                      </button>
+                      <button class="btn btn-sm btn-success" ng-click="c.reserve(item)">
+                        <span class="glyphicon glyphicon-phone"></span> Reserve
+                      </button>
+                      <button class="btn btn-sm btn-warning" ng-click="c.unreserve(item)"
+                        ng-show="c.hasActiveReservation(item.id)">
+                        <span class="glyphicon glyphicon-ban-circle"></span> Unreserve
+                      </button>
+                    </td>
+                  </tr>
+                  <tr class="empty-row" ng-if="c.results.length === 0">
+                    <td colspan="5">
+                      <span class="empty-icon">👥</span>
+                      No clients found
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Phone Numbers view ───────────────────────────────────── -->
+        <div ng-if="appView==='phonenumbers'" ng-controller="PhoneNumbersCtrl as p">
+          <div class="page-header-bar">
+            <div>
+              <h2 class="page-title">Phone Numbers</h2>
+              <div class="page-subtitle">Manage SIM numbers and their device assignments</div>
+            </div>
+            <button class="btn btn-success" ng-click="p.add()">
+              <span class="glyphicon glyphicon-plus"></span> Add Phone Number
+            </button>
+          </div>
+
+          <div class="controls card">
+            <div class="card-label">Filter</div>
+            <div class="row">
+              <div class="col-sm-6">
+                <div class="input-group">
+                  <input type="text" class="form-control" placeholder="Search by number…" ng-model="p.query"
+                    ng-keyup="$event.keyCode==13 && p.search()" />
+                  <span class="input-group-btn">
+                    <button class="btn btn-primary" ng-click="p.search()">
+                      <span class="glyphicon glyphicon-search"></span> Search
+                    </button>
+                  </span>
+                </div>
+              </div>
+              <div class="col-sm-3">
+                <device-selector selected-value="p.deviceFilter" on-change="p.filterByDevice(value)"
+                  show-all-option="true" api="p.deviceSelectorApi">
+                </device-selector>
+              </div>
+              <div class="col-sm-3"></div>
+            </div>
+          </div>
+
+          <div class="card table-card">
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th style="width:70px">ID</th>
+                    <th>Phone Number</th>
+                    <th>Device</th>
+                    <th style="width:160px">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr ng-repeat="item in p.results track by item.id">
+                    <td><span class="id-chip">#{{item.id}}</span></td>
+                    <td><span class="phone-num">{{item.number}}</span></td>
+                    <td>{{item.deviceName || '—'}}</td>
+                    <td class="actions-cell">
+                      <button class="btn btn-sm btn-info" ng-click="p.edit(item)">
+                        <span class="glyphicon glyphicon-pencil"></span> Edit
+                      </button>
+                      <button class="btn btn-sm btn-danger" ng-click="p.confirmDelete(item)">
+                        <span class="glyphicon glyphicon-trash"></span> Delete
+                      </button>
+                    </td>
+                  </tr>
+                  <tr class="empty-row" ng-if="p.results.length === 0">
+                    <td colspan="4">
+                      <span class="empty-icon">📞</span>
+                      No phone numbers found
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Reservations view ────────────────────────────────────── -->
+        <div ng-if="appView==='reservations'" ng-controller="ReservationsCtrl as r">
+          <div class="page-header-bar">
+            <div>
+              <h2 class="page-title">Reservations</h2>
+              <div class="page-subtitle">View active and historical phone number reservations</div>
+            </div>
+          </div>
+
+          <div class="controls card">
+            <div class="card-label">Filter</div>
+            <div class="row">
+              <div class="col-sm-4">
+                <client-selector selected-value="r.clientFilter" on-change="r.filterByClient(value)"
+                  show-all-option="true" api="r.clientSelectorApi">
+                </client-selector>
+              </div>
+              <div class="col-sm-4">
+                <phone-number-selector selected-value="r.phoneNumberFilter" on-change="r.filterByPhoneNumber(value)"
+                  show-all-option="true" api="r.phoneNumberSelectorApi">
+                </phone-number-selector>
+              </div>
+              <div class="col-sm-4"></div>
+            </div>
+          </div>
+
+          <div class="card table-card">
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th style="width:70px">ID</th>
+                    <th>Client</th>
+                    <th>Phone Number</th>
+                    <th style="width:140px">BED</th>
+                    <th style="width:140px">EED</th>
+                    <th style="width:100px">Status</th>
+                    <th style="width:100px">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr ng-repeat="item in r.results track by item.id">
+                    <td><span class="id-chip">#{{item.id}}</span></td>
+                    <td><strong>{{item.clientName}}</strong></td>
+                    <td><span class="phone-num">{{item.phoneNumber}}</span></td>
+                    <td>{{item.bed | date:'dd MMM yyyy'}}</td>
+                    <td>{{item.eed ? (item.eed | date:'dd MMM yyyy') : '—'}}</td>
+                    <td>
+                      <span ng-if="!item.eed" class="badge-reserved">Active</span>
+                      <span ng-if="item.eed" class="badge-unreserved">Ended</span>
+                    </td>
+                    <td class="actions-cell">
+                      <button class="btn btn-sm btn-danger" ng-click="r.confirmDelete(item)">
+                        <span class="glyphicon glyphicon-trash"></span>
+                      </button>
+                    </td>
+                  </tr>
+                  <tr class="empty-row" ng-if="r.results.length === 0 && !r.loading">
+                    <td colspan="7">
+                      <span class="empty-icon">📅</span>
+                      No reservations found
+                    </td>
+                  </tr>
+                  <tr class="empty-row" ng-if="r.loading">
+                    <td colspan="7">Loading…</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Clients Report view ──────────────────────────────────── -->
+        <div ng-if="appView==='clientsreport'" ng-controller="ClientsReportCtrl as cr">
+          <div class="page-header-bar">
+            <div>
+              <h2 class="page-title">Clients Report</h2>
+              <div class="page-subtitle">Number of subscribers per account type</div>
+            </div>
+          </div>
+
+          <div class="controls card">
+            <div class="card-label">Filter</div>
+            <div class="row">
+              <div class="col-sm-4">
+                <client-type-selector selected-value="cr.typeFilter" on-change="cr.filterByType(value)"
+                  show-all-option="true" api="cr.typeSelectorApi">
+                </client-type-selector>
+              </div>
+              <div class="col-sm-8"></div>
+            </div>
+          </div>
+
+          <div class="card table-card">
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>Type</th>
+                    <th style="width:180px">No. of Clients</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr ng-repeat="item in cr.results track by item.type">
+                    <td>
+                      <span ng-if="item.type === 0" class="badge-individual">Individual</span>
+                      <span ng-if="item.type === 1" class="badge-organization">Organization</span>
+                    </td>
+                    <td><span class="report-count">{{item.noOfClients}}</span></td>
+                  </tr>
+                  <tr class="empty-row" ng-if="cr.results.length === 0 && !cr.loading">
+                    <td colspan="2">
+                      <span class="empty-icon">📊</span>
+                      No data found
+                    </td>
+                  </tr>
+                  <tr class="empty-row" ng-if="cr.loading">
+                    <td colspan="2">Loading…</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Phone Numbers Report view ────────────────────────────── -->
+        <div ng-if="appView==='phonenumbersreport'" ng-controller="PhoneNumbersReportCtrl as pnr">
+          <div class="page-header-bar">
+            <div>
+              <h2 class="page-title">Phone Numbers Report</h2>
+              <div class="page-subtitle">Reserved vs unreserved numbers per device</div>
+            </div>
+          </div>
+
+          <div class="controls card">
+            <div class="card-label">Filter</div>
+            <div class="row">
+              <div class="col-sm-4">
+                <device-selector selected-value="pnr.deviceFilter" on-change="pnr.filterByDevice(value)"
+                  show-all-option="true" api="pnr.deviceSelectorApi">
+                </device-selector>
+              </div>
+              <div class="col-sm-4">
+                <select class="form-control" ng-model="pnr.statusFilter"
+                  ng-change="pnr.filterByStatus(pnr.statusFilter)">
+                  <option value="">All statuses</option>
+                  <option value="Reserved">Reserved</option>
+                  <option value="Unreserved">Unreserved</option>
+                </select>
+              </div>
+              <div class="col-sm-4"></div>
+            </div>
+          </div>
+
+          <div class="card table-card">
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>Device</th>
+                    <th style="width:190px">Status</th>
+                    <th style="width:180px"># of Phone Numbers</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr ng-repeat="item in pnr.results track by (item.deviceId + item.status)">
+                    <td><strong>{{item.deviceName}}</strong></td>
+                    <td>
+                      <span ng-if="item.status === 'Reserved'" class="badge-reserved">Reserved</span>
+                      <span ng-if="item.status !== 'Reserved'" class="badge-unreserved">Unreserved</span>
+                    </td>
+                    <td><span class="report-count">{{item.noOfPhoneNumbers}}</span></td>
+                  </tr>
+                  <tr class="empty-row" ng-if="pnr.results.length === 0 && !pnr.loading">
+                    <td colspan="3">
+                      <span class="empty-icon">📈</span>
+                      No data found
+                    </td>
+                  </tr>
+                  <tr class="empty-row" ng-if="pnr.loading">
+                    <td colspan="3">Loading…</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </main>
+    </div><!-- /.app-main-wrap -->
+  </div><!-- /.app-shell -->
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
   <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-ui-bootstrap/0.14.3/ui-bootstrap-tpls.min.js"></script>
 
-  <script src="src/app.module.js"></script>
-  <script src="src/services/items.service.js"></script>
-  <script src="src/services/clients.service.js"></script>
-  <script src="src/controllers/item-modal.controller.js"></script>
-  <script src="src/controllers/main.controller.js"></script>
-  <script src="src/controllers/clients.controller.js"></script>
-  <script src="src/controllers/client-modal.controller.js"></script>
+  <script src="src/app.module.js?v=20260303"></script>
+  <script src="src/services/auth.service.js?v=20260303"></script>
+  <script src="src/controllers/login.controller.js?v=20260303"></script>
+  <script src="src/directives/client-type-selector.directive.js?v=20260303"></script>
+  <script src="src/directives/device-selector.directive.js?v=20260303"></script>
+  <script src="src/directives/client-selector.directive.js?v=20260303"></script>
+  <script src="src/directives/phone-number-selector.directive.js?v=20260303"></script>
+  <script src="src/services/items.service.js?v=20260303"></script>
+  <script src="src/services/clients.service.js?v=20260303"></script>
+  <script src="src/services/phonenumbers.service.js?v=20260303"></script>
+  <script src="src/services/reservations.service.js?v=20260303"></script>
+  <script src="src/controllers/item-modal.controller.js?v=20260303"></script>
+  <script src="src/controllers/main.controller.js?v=20260303"></script>
+  <script src="src/controllers/clients.controller.js?v=20260303"></script>
+  <script src="src/controllers/client-modal.controller.js?v=20260303"></script>
+  <script src="src/controllers/phonenumbers.controller.js?v=20260303"></script>
+  <script src="src/controllers/phonenumber-modal.controller.js?v=20260303"></script>
+  <script src="src/controllers/reservations.controller.js?v=20260303"></script>
+  <script src="src/services/reports.service.js?v=20260303"></script>
+  <script src="src/controllers/reports.controller.js?v=20260303"></script>
+
+  <!-- ── Modal templates ─────────────────────────────────────────────── -->
 
   <script type="text/ng-template" id="itemModal.html">
-      <div class="modal-header">
-        <h3 class="modal-title">Device <small class="text-muted">{{modalCtrl.modalTitle}}</small></h3>
-      </div>
-      <div class="modal-body">
-        <form name="itemForm" novalidate>
-          <div class="form-group">
-            <label>Name</label>
-            <input type="text" class="form-control" ng-model="modalCtrl.item.name" required />
-          </div>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-default" ng-click="modalCtrl.cancel()">Cancel</button>
-        <button class="btn btn-primary" ng-click="modalCtrl.save()" ng-disabled="!modalCtrl.item.name">Save</button>
-      </div>
-    </script>
+    <div class="modal-header">
+      <h3 class="modal-title">
+        <span class="glyphicon glyphicon-hdd" style="margin-right:8px;color:var(--accent)"></span>
+        Device <small>{{modalCtrl.modalTitle}}</small>
+      </h3>
+      <button type="button" class="close" ng-click="modalCtrl.cancel()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form name="itemForm" novalidate>
+        <div class="form-group">
+          <label>Device Name</label>
+          <input type="text" class="form-control" ng-model="modalCtrl.item.name"
+            placeholder="e.g., Router, Sensor…" required autofocus />
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-default" ng-click="modalCtrl.cancel()">Cancel</button>
+      <button class="btn btn-primary" ng-click="modalCtrl.save()" ng-disabled="!modalCtrl.item.name">
+        <span class="glyphicon glyphicon-floppy-disk"></span> Save
+      </button>
+    </div>
+  </script>
 
   <script type="text/ng-template" id="clientModal.html">
-      <div class="modal-header">
-        <h3 class="modal-title">Client <small class="text-muted">{{modalCtrl.modalTitle}}</small></h3>
-      </div>
-      <div class="modal-body">
-        <form name="clientForm" novalidate>
-          <div class="form-group">
-            <label>Name</label>
-            <input type="text" class="form-control" ng-model="modalCtrl.item.name" required />
-          </div>
+    <div class="modal-header">
+      <h3 class="modal-title">
+        <span class="glyphicon glyphicon-user" style="margin-right:8px;color:var(--accent)"></span>
+        Client <small>{{modalCtrl.modalTitle}}</small>
+      </h3>
+      <button type="button" class="close" ng-click="modalCtrl.cancel()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form name="clientForm" novalidate>
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" class="form-control" ng-model="modalCtrl.item.name"
+            placeholder="Client name…" required autofocus />
+        </div>
+        <div class="form-group">
+          <label>Account Type</label>
+          <client-type-selector
+            selected-value="modalCtrl.item.type"
+            api="modalCtrl.typeSelectorApi">
+          </client-type-selector>
+        </div>
+        <div class="form-group" ng-if="modalCtrl.item.type == '0'">
+          <label>Birth Date <span style="color:var(--danger);font-size:0.75rem">*required</span></label>
+          <input type="date" class="form-control" ng-model="modalCtrl.item.birthDate" required />
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-default" ng-click="modalCtrl.cancel()">Cancel</button>
+      <button class="btn btn-primary" ng-click="modalCtrl.save()"
+        ng-disabled="!modalCtrl.item.name || !modalCtrl.item.type || (modalCtrl.item.type=='0' && !modalCtrl.item.birthDate)">
+        <span class="glyphicon glyphicon-floppy-disk"></span> Save
+      </button>
+    </div>
+  </script>
 
-          <div class="form-group">
-            <label>Type</label>
-            <select class="form-control" ng-model="modalCtrl.item.type">
-              <option ng-value="0">Individual</option>
-              <option ng-value="1">Organization</option>
-            </select>
-          </div>
+  <script type="text/ng-template" id="phoneNumberModal.html">
+    <div class="modal-header">
+      <h3 class="modal-title">
+        <span class="glyphicon glyphicon-earphone" style="margin-right:8px;color:var(--accent)"></span>
+        Phone Number <small>{{modalCtrl.modalTitle}}</small>
+      </h3>
+      <button type="button" class="close" ng-click="modalCtrl.cancel()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form name="phoneNumberForm" novalidate>
+        <div class="form-group">
+          <label>Phone Number</label>
+          <input type="text" class="form-control" ng-model="modalCtrl.item.number"
+            placeholder="e.g., +1 (555) 123-4567" required autofocus />
+        </div>
+        <div class="form-group">
+          <label>Device</label>
+          <device-selector
+            selected-value="modalCtrl.item.deviceId"
+            api="modalCtrl.deviceSelectorApi">
+          </device-selector>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-default" ng-click="modalCtrl.cancel()">Cancel</button>
+      <button class="btn btn-primary" ng-click="modalCtrl.save()"
+        ng-disabled="!modalCtrl.item.number || !modalCtrl.item.deviceId">
+        <span class="glyphicon glyphicon-floppy-disk"></span> Save
+      </button>
+    </div>
+  </script>
 
-          <div class="form-group" ng-if="modalCtrl.item.type === 0">
-            <label>Birth date (optional)</label>
-            <input type="date" class="form-control" ng-model="modalCtrl.item.birthDate" />
-          </div>
-        </form>
+  <script type="text/ng-template" id="reserveModal.html">
+    <div class="modal-header">
+      <h3 class="modal-title">
+        <span class="glyphicon glyphicon-phone" style="margin-right:8px;color:var(--accent)"></span>
+        Reserve Phone Number
+      </h3>
+      <button type="button" class="close" ng-click="m.cancel()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Client</label>
+        <input type="text" class="form-control" value="{{m.client.name}}" disabled />
       </div>
-      <div class="modal-footer">
-        <button class="btn btn-default" ng-click="modalCtrl.cancel()">Cancel</button>
-        <button class="btn btn-primary" ng-click="modalCtrl.save()" ng-disabled="!modalCtrl.item.name">Save</button>
+      <div class="form-group">
+        <label>Phone Number</label>
+        <phone-number-selector
+          selected-value="m.phoneNumberId"
+          api="m.phoneNumberSelectorApi">
+        </phone-number-selector>
       </div>
-    </script>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-default" ng-click="m.cancel()">Cancel</button>
+      <button class="btn btn-success" ng-click="m.save()" ng-disabled="!m.phoneNumberId">
+        <span class="glyphicon glyphicon-phone"></span> Confirm Reserve
+      </button>
+    </div>
+  </script>
+
+  <script type="text/ng-template" id="unreserveModal.html">
+    <div class="modal-header">
+      <h3 class="modal-title">
+        <span class="glyphicon glyphicon-ban-circle" style="margin-right:8px;color:var(--warning)"></span>
+        Unreserve Phone Number
+      </h3>
+      <button type="button" class="close" ng-click="m.cancel()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Client</label>
+        <input type="text" class="form-control" value="{{m.client.name}}" disabled />
+      </div>
+      <div class="form-group">
+        <label>Reserved Phone Number</label>
+        <select class="form-control" ng-model="m.phoneNumberId"
+          ng-options="r.phoneNumberId as r.phoneNumber for r in m.activeReservations">
+          <option value="">Select a reserved number…</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-default" ng-click="m.cancel()">Cancel</button>
+      <button class="btn btn-warning" ng-click="m.confirm()" ng-disabled="!m.phoneNumberId">
+        <span class="glyphicon glyphicon-ban-circle"></span> Confirm Unreserve
+      </button>
+    </div>
+  </script>
 
   <script type="text/ng-template" id="confirmDelete.html">
-      <div class="modal-header">
-        <h3 class="modal-title">Confirm Delete</h3>
-      </div>
-      <div class="modal-body">Are you sure you want to delete <strong>{{m.item.name}}</strong>?</div>
-      <div class="modal-footer">
-        <button class="btn btn-default" ng-click="m.cancel()">Cancel</button>
-        <button class="btn btn-danger" ng-click="m.confirm()">Delete</button>
-      </div>
-    </script>
+    <div class="modal-header">
+      <h3 class="modal-title">
+        <span class="glyphicon glyphicon-warning-sign" style="margin-right:8px;color:var(--danger)"></span>
+        Confirm Delete
+      </h3>
+      <button type="button" class="close" ng-click="m.cancel()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p style="margin:0;font-size:0.95rem;">
+        Are you sure you want to delete
+        <strong>{{m.item.name || m.item.number}}</strong>?
+        This action cannot be undone.
+      </p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-default" ng-click="m.cancel()">Cancel</button>
+      <button class="btn btn-danger" ng-click="m.confirm()">
+        <span class="glyphicon glyphicon-trash"></span> Delete
+      </button>
+    </div>
+  </script>
+
 </body>
 
 </html>

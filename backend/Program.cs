@@ -9,6 +9,9 @@ builder.Services.AddControllers();
 builder.Services.AddScoped<IDeviceRepository, DeviceRepository>();
 builder.Services.AddScoped<DeviceInventory.Data.IClientRepository, DeviceInventory.Data.ClientRepository>();
 builder.Services.AddScoped<IPhoneNumberRepository, PhoneNumberRepository>();
+builder.Services.AddScoped<DeviceInventory.Data.IPhoneNumberReservationRepository, DeviceInventory.Data.PhoneNumberReservationRepository>();
+builder.Services.AddScoped<DeviceInventory.Data.IReportRepository, DeviceInventory.Data.ReportRepository>();
+builder.Services.AddScoped<DeviceInventory.Data.IUserRepository, DeviceInventory.Data.UserRepository>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("DevCors", policy =>
@@ -27,10 +30,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
-app.UseAuthorization();
-
 app.UseCors("DevCors");
+app.UseAuthorization();
 
 app.MapControllers();
 
